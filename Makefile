@@ -17,7 +17,7 @@ INCLUDES = -I $(HEADER_FILES_DIR)
 OUTPUT = p0
 
 #ficheros .h.  Si hay varios, se precede cada uno con $(HEADER_FILES_DIR)/
-HEADERS = $(HEADER_FILES_DIR)/vectordinamico.h voraz.h
+HEADERS = $(HEADER_FILES_DIR)
 
 #FUENTES: todos los archivos .c necesarios
 SRCS = p0.c listas.c
