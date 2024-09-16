@@ -29,10 +29,6 @@ int main(int argc, char** argv){
         printf("->");
         scanf("%s", cmd);
         scanf("%s",arg);
-        switch (cmd){
-            case "quit":
-            break;
-        }
         if(strcmp(cmd,"quit")==0 || strcmp(cmd,"bye")==0 || strcmp(cmd,"exit")==0){
             //destruye(&list);
             break;
