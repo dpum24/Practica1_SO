@@ -4,6 +4,16 @@
 #include <time.h>
 #include "listas.h"
 
+void authors(){
+    printf("Rubén Sayáns Fortes, ruben.sayans@udc.es\nDiego Pumarol Guerrero, diego.pumarol@udc.es");
+}
+void authorsl(){
+    printf("ruben.sayans@udc.es, diego.pumarol@udc.es");
+}
+void authorsn(){
+    printf("Rubén Sayáns Fortes, Diego Pumarol Guerrero");
+}
+
 void fechad(){
     time_t t;
     struct tm *current;
