@@ -5,13 +5,13 @@
 #include "listas.h"
 
 void authors(){
-    printf("Rubén Sayáns Fortes, ruben.sayans@udc.es\nDiego Pumarol Guerrero, diego.pumarol@udc.es");
+    printf("Rubén Sayáns Fortes, ruben.sayans@udc.es\nDiego Emilio Pumarol Guerrero, diego.pumarol@udc.es");
 }
 void authorsl(){
     printf("ruben.sayans@udc.es, diego.pumarol@udc.es");
 }
 void authorsn(){
-    printf("Rubén Sayáns Fortes, Diego Pumarol Guerrero");
+    printf("Rubén Sayáns Fortes, Diego Emilio Pumarol Guerrero");
 }
 
 void fecha(){
@@ -43,18 +43,43 @@ void fechat(){
 int main(int argc, char** argv){
     //ps aux
     //valgrind
-    char cmd[20], arg[20];
-    /*TLISTA list;
-    crea(&list);*/
+    char *cmd,*arg, wd[25];
+    char *input = malloc(sizeof(char)*20);
+    /*TLISTA historial;
+    crea(&historial);*/
     while(1){
         printf("->");
-        scanf("%s", cmd);
-        scanf("%s",arg);
-        if(strcmp(cmd,"quit")==0 || strcmp(cmd,"bye")==0 || strcmp(cmd,"exit")==0){
-            //destruye(&list);
-            break;
-        }else{
-            //inserta(list,primero(list),cmd);
+        fgets(input,sizeof(input),stdin);
+        input[strcspn(input, "\n")] = 0;
+        cmd = strtok(input," ");
+        arg = strtok(NULL,"\n");
+        if (cmd != NULL) {
+            if (strcmp(cmd, "date") == 0) {
+                if (arg != NULL && strcmp(arg, "-t")==0) {
+                    fechat();
+                } else if (arg != NULL && strcmp(arg,"-d")==0){
+                    fechad();
+                }else{
+                    printf("No se encontro tu comando\n");
+                }
+            } else if (strcmp(cmd,"pid")==0){
+                pid_t pid = getpid();
+                printf("%d\n",pid);
+            }
+            else if (strcmp(cmd,"exit")==0 || strcmp(cmd,"bye")==0 || strcmp(cmd,"quit")==0) {
+                printf("Saliendo del shell...\n");
+                free(input);
+                break;
+            }else if(strcmp(cmd,"cd")==0){
+            getcwd(wd,sizeof(wd));
+            printf("%s\n",wd);
+            }
+            else {
+                printf("Comando no reconocido: %s\n", cmd);
+            }
+        }
+        else{
+            printf("Error al escanear la linea.\n");
         }
     }
 }
