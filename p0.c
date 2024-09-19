@@ -14,6 +14,17 @@ void authorsn(){
     printf("Rubén Sayáns Fortes, Diego Pumarol Guerrero");
 }
 
+void fecha(){
+    time_t t;
+    struct tm *current;
+    time(&t);
+    current = localtime(&t);
+    printf("%02d/%02d/%04d\n", current->tm_mday, current->tm_mon + 1, current->tm_year + 1900);
+    struct tm *now;
+    time(&t);
+    now = localtime(&t);
+    printf("%02d/%02d/%04d\n",now->tm_hour,now->tm_min,now->tm_sec);
+}
 void fechad(){
     time_t t;
     struct tm *current;
