@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/types.h>  
+#include <unistd.h> 
+#include <fcntl.h>
 #include "listas.h"
 
 void authors(){
@@ -43,39 +46,62 @@ void fechat(){
 int main(int argc, char** argv){
     //ps aux
     //valgrind
-    char *cmd,*arg, wd[25];
-    char *input = malloc(sizeof(char)*20);
+    int counter;
+    char *args[5], wd[25];
+    char *input = malloc(sizeof(char)*30);
     /*TLISTA historial;
     crea(&historial);*/
+    TLISTA abiertos;
+    crea(&abiertos);
     while(1){
         printf("->");
-        fgets(input,sizeof(input),stdin);
-        input[strcspn(input, "\n")] = 0;
-        cmd = strtok(input," ");
-        arg = strtok(NULL,"\n");
-        if (cmd != NULL) {
-            if (strcmp(cmd, "date") == 0) {
-                if (arg != NULL && strcmp(arg, "-t")==0) {
+        fgets(input, sizeof(input), stdin);
+        counter=0;
+        char *ref = strtok(input, " \n");
+        while (ref != NULL) {
+            args[counter++] = ref;
+            ref = strtok(NULL, " \n");
+        }
+        args[counter] = NULL;
+        if (args[0] != NULL) {
+            if (strcmp(args[0], "date") == 0) {
+                if (args[1] != NULL && strcmp(args[1], "-t")==0) {
                     fechat();
-                } else if (arg != NULL && strcmp(arg,"-d")==0){
+                } else if (args[1] != NULL && strcmp(args[1],"-d")==0){
                     fechad();
                 }else{
                     printf("No se encontro tu comando\n");
                 }
-            } else if (strcmp(cmd,"pid")==0){
+            } else if (strcmp(args[0],"pid")==0){
                 pid_t pid = getpid();
                 printf("%d\n",pid);
             }
-            else if (strcmp(cmd,"exit")==0 || strcmp(cmd,"bye")==0 || strcmp(cmd,"quit")==0) {
+            else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {
                 printf("Saliendo del shell...\n");
                 free(input);
+                destruye(abiertos);
                 break;
-            }else if(strcmp(cmd,"cd")==0){
+            }else if(strcmp(args[0],"cd")==0){
             getcwd(wd,sizeof(wd));
             printf("%s\n",wd);
+            }else if(strcmp(args[0],"open")==0){
+                Cmd_open(args);
+            }else if(strcmp(args[0],"authors")==0){
+                if(counter == 1){
+                    authors();
+                }else{
+                    if(strcmp(args[1],"-l")==0){
+                        authorsl();
+                    }else if(strcmp(args[1],"-n")==0){
+                        authorsn();
+                    }
+                    else{
+                        printf("No se encontró tu comando\n");
+                    }
+                }
             }
             else {
-                printf("Comando no reconocido: %s\n", cmd);
+                printf("Comando no reconocido: %s\n", args[0]);
             }
         }
         else{
