@@ -8,13 +8,13 @@
 #include "listas.h"
 
 void authors(){
-    printf("Rubén Sayáns Fortes, ruben.sayans@udc.es\nDiego Emilio Pumarol Guerrero, diego.pumarol@udc.es");
+    printf("Rubén Sayáns Fortes, ruben.sayans@udc.es\nDiego Emilio Pumarol Guerrero, diego.pumarol@udc.es\n");
 }
 void authorsl(){
-    printf("ruben.sayans@udc.es, diego.pumarol@udc.es");
+    printf("ruben.sayans@udc.es, diego.pumarol@udc.es\n");
 }
 void authorsn(){
-    printf("Rubén Sayáns Fortes, Diego Emilio Pumarol Guerrero");
+    printf("Rubén Sayáns Fortes, Diego Emilio Pumarol Guerrero\n");
 }
 
 void fecha(){
