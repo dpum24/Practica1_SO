@@ -181,7 +181,7 @@ int main(int argc, char** argv){
             }else if(strcmp(arg[0],"help")==0){
                 if(strcmp(arg[1] != NULL) && strcmp(arg[1],"authors") || strcmp(arg[1], "pid") || strcmp(arg[1], "ppid") || strcmp(arg[1], "cd") || strcmp(arg[1], "date") || strcmp(arg[1], "historic") || strcmp(arg[1], "open") || strcmp(arg[1], "close") || strcmp(arg[1], "dup") || strcmp(arg[1], "infosys") || strcmp(arg[1], "help") || strcmp(arg[1], "quit") || strcmp(arg[1], "exit") || strcmp(arg[1], "bye")){
                     help_cmd();
-                } 
+                } else help();
             } else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
                 printf("Saliendo del shell...\n");
                 free(input);
