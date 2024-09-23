@@ -1,15 +1,21 @@
-typedef char* TIPOELEMENTOLISTA;
-typedef void *TNODOLISTA;
-typedef void *TLISTA;
+#include "types.h"
 
-void crea(TLISTA *l);
-void destruye(TLISTA *l);
-TNODOLISTA primero(TLISTA l);
-TNODOLISTA fin(TLISTA l);
-int esVacia(TLISTA l);
-void recupera(TLISTA l, TNODOLISTA p, TIPOELEMENTOLISTA *e);
-int longitud(TLISTA l);
-void inserta(TLISTA *l, TNODOLISTA p, TIPOELEMENTOLISTA e);
-void suprime(TLISTA *l, TNODOLISTA p);
-void modifica(TLISTA *l, TNODOLISTA p, TIPOELEMENTOLISTA e);
-TNODOLISTA siguiente(TLISTA l, TNODOLISTA p);
+typedef tSong tItemS;
+
+typedef int tPosS;
+typedef struct {
+    tPosS lastPos;
+    tSong data[MAX];
+} tListS;
+
+void createEmptyListS (tListS *S);
+bool isEmptyListS (tListS* S);
+tPosS firstS (tListS S);
+tPosS lastS (tListS S);
+tPosS nextS (tPosS P, tListS S);
+tPosS previousS (tItemS I, tListS S);
+bool insertItemS (tItemS I, tPosS P, tListS S);
+void deleteAtPositionS (tPosS P, tListS S);
+tSong getItemS (tPosS P, tListS S);
+void updateItemS (tItemS I, tPosS P, tListS S);
+tPosS findItemS (tSongTitle ST, tListS S);
