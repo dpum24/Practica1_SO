@@ -42,6 +42,17 @@ void fechat(){
     now = localtime(&t);
     printf("%02d/%02d/%04d\n",now->tm_hour,now->tm_min,now->tm_sec);
 }
+void infosys(){
+    struct utsname udata;
+    if(uname(&udata)<0){
+        perror("Error en funcion uname\n");
+    }
+    printf("nombresistema = %s\n", udata.sysname);
+    printf("node name   = %s\n", udata.nodename);
+    printf("lanzamiento     = %s\n", udata.release);
+    printf("version     = %s\n", udata.version);
+    printf("maquina     = %s\n", udata.machine);
+}
 void Cmd_open (char * tr[],TLISTA *abiertos){
     int i,df, mode=0;
     TIPOELEMENTOLISTA elemento;
@@ -127,6 +138,8 @@ int main(int argc, char** argv){
             }
             else if(strcmp(args[0],"open")==0){//Comando Open
                 Cmd_open(args,&abiertos);
+            }else if (strcmp(args[0],"infosys")==0){
+                infosys();
             }
             else if(strcmp(args[0],"authors")==0){//Autores de la practica
                 if(counter == 1){
