@@ -42,6 +42,43 @@ void fechat(){
     now = localtime(&t);
     printf("%02d/%02d/%04d\n",now->tm_hour,now->tm_min,now->tm_sec);
 }
+void help() {
+    printf("authors[-l/-n]\npid\nppid\ncd [dir]\ndate[-d/-t]\nhistoric[-N/N]\nopen [archivo] modo\nclose [df]\ndup [df]\ninfosys\nhelp [cmd]\nquit\nexit\nbye");
+}
+void help_cmd(){
+    if(strcmp(arg[1], "authors")==0){
+        printf("Imprime los nombres y logins de los autores del programa. authors -l imprime solo los logins y authors -n imprime solo los nombres.");
+    } else if(strcmp(arg[1], "pid")==0){
+        printf("Imprime el pid del proceso que está ejecutando la shell");
+    } else if(strcmp(arg[1], "ppid")==0){
+        printf("Imprime el pid del proceso padre de la shell.");
+    } else if(strcmp(arg[1], "cd")==0){
+        printf(" Cambia el directorio de trabajo actual de la shell a dir. Si se invoca sin argumentos, imprime el directorio de trabajo actual");
+    } else if(strcmp(arg[1], "date")==0){
+        printf(" Imprime la fecha actual en formato DD/MM/AAAA y la hora actual en formato hh:mm ");
+    } else if(strcmp(arg[1], "historic")==0){
+        printf("Muestra el historial de comandos ejecutados por esta shell. \n"
+               "\n"
+               "historic imprime todos los comandos introducidos con su número de orden. \n"
+               "\n"
+               "historic N repite el comando número N (de la lista de históricos). \n"
+               "\n"
+               "historic -N imprime solo los últimos N comandos.");
+    } else if(strcmp(arg[1], "open")==0){
+        printf(" Abre un archivo y lo añade (junto con el descriptor de archivo y el modo de apertura) a la lista de archivos abiertos por la shell");
+    } else if(strcmp(arg[1], "close")==0){
+        printf("Cierra el descriptor de archivo df y elimina el ítem correspondiente de la lista. ");
+    } else if(strcmp(arg[1], "dup")==0){
+        printf("Duplica el descriptor de archivo df, creando la correspondiente nueva entrada en la lista de archivos. ");
+    } else if(strcmp(arg[1], "infosys")==0){
+        printf("Imprime información sobre la máquina que ejecuta la shell. ");
+    } else if(strcmp(arg[1], "help")==0){
+        printf("help muestra una lista de comandos disponibles. help cmd ofrece una breve descripción del uso del comando cmd");
+    } else if((strcmp(arg[1], "quit") || strcmp(arg, "bye") || strcmp(arg, "exit"))==0){
+        printf("Finaliza la shell. ");
+    }
+}
+
 void Cmd_open (char * tr[],TLISTA *abiertos){
     int i,df, mode=0;
     TIPOELEMENTOLISTA elemento;
@@ -141,7 +178,11 @@ int main(int argc, char** argv){
                         perror("No se encontró tu comando\n");
                     }
                 }
-            }else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
+            }else if(strcmp(arg[0],"help")==0){
+                if(strcmp(arg[1] != NULL) && strcmp(arg[1],"authors") || strcmp(arg[1], "pid") || strcmp(arg[1], "ppid") || strcmp(arg[1], "cd") || strcmp(arg[1], "date") || strcmp(arg[1], "historic") || strcmp(arg[1], "open") || strcmp(arg[1], "close") || strcmp(arg[1], "dup") || strcmp(arg[1], "infosys") || strcmp(arg[1], "help") || strcmp(arg[1], "quit") || strcmp(arg[1], "exit") || strcmp(arg[1], "bye")){
+                    help_cmd();
+                } 
+            } else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
                 printf("Saliendo del shell...\n");
                 free(input);
                 destruye(abiertos);
