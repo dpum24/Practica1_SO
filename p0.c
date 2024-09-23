@@ -98,7 +98,7 @@ int main(int argc, char** argv){
         fgets(input, 20, stdin);
         counter = TrocearCadena(input,args);
         if (counter != 0) {
-            if (strcmp(args[0], "date") == 0) {//Comando de fechas falta el caso de sin argumentos
+            if (strcmp(args[0], "date") == 0) {
                 if (args[1] != NULL && strcmp(args[1], "-t")==0) {
                     fechat();
                 } else if (args[1] != NULL && strcmp(args[1],"-d")==0){
