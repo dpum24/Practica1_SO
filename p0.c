@@ -103,7 +103,9 @@ int main(int argc, char** argv){
                     fechat();
                 } else if (args[1] != NULL && strcmp(args[1],"-d")==0){
                     fechad();
-                }else{
+                }else if (args[1] = NULL){
+                    fecha();
+                } else {
                     perror("No se encontro tu comando\n");
                 }
             } else if (strcmp(args[0],"pid")==0){
