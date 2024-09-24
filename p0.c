@@ -53,6 +53,55 @@ void infosys(){
     printf("version     = %s\n", udata.version);
     printf("maquina     = %s\n", udata.machine);
 }
+void historics(char *args[],TLISTA *history,TNODOLISTA *dndhist){
+    int i = 0;
+    TIPOELEMENTOLISTA elemento;
+    if(esVacia(*history)){
+        elemento.num=0;
+    }else{
+        elemento.num = longitud(*history);
+    }
+    while(args[i]!=NULL){
+        strcat(elemento.cmd,args[i]);
+        strcat(elemento.cmd," ");
+        i++;
+    }
+    elemento.num++;
+    inserta(history,*dndhist,elemento);
+    *dndhist = siguiente(*history,*dndhist);
+}
+void phistorics(TLISTA history, char *arg){//en el caso de -N quitar el "-" y hacer el bucle
+    int num;
+    char nu[3];
+    TNODOLISTA nod;
+    TIPOELEMENTOLISTA e;
+    if(arg == NULL){
+    for(nod =primero(history); nod != fin(history);nod=siguiente(history,nod)){
+        recupera(history,nod,&e);
+        printf("N=%d %s\n",e.num,e.cmd);
+    }}
+    else{
+        num = atoi(arg);
+        if(num==0){
+            strtok(arg,"-");
+            strcpy(nu,strtok(NULL," "));
+            num = atoi(nu);
+            printf("%d",num);
+            /*for(nod =primero(history); nod != fin(history);nod=siguiente(history,nod)){
+                printf("%d: %s",)
+            }*/
+        }else{
+            for(nod = primero(history);nod!=fin(history);nod=siguiente(history,nod)){
+            recupera(history,nod,&e);
+            if(e.num==num){
+                printf("%s\n",e.cmd);
+                //repeat_cmd();
+                break;
+            }
+        }
+        }
+    }
+}
 void Cmd_open (char * tr[],TLISTA *abiertos){
     int i,df, mode=0;
     TIPOELEMENTOLISTA elemento;
@@ -99,28 +148,34 @@ int TrocearCadena(char * cadena, char * trozos[]){
 int main(int argc, char** argv){
     //ps aux
     //valgrind
+    TIPOELEMENTOLISTA e;
+    pid_t pid;
     int counter;
     char *args[10], wd[25];
     char *input = malloc(sizeof(char) * 20);
-    TLISTA abiertos;
+    TLISTA abiertos, historial;
+    //TNODOLISTA dndabiertos;
     crea(&abiertos);
+    crea(&historial);
+    TNODOLISTA dndhist = primero(historial);
     while(1){
         printf("->");
         fgets(input, 20, stdin);
         counter = TrocearCadena(input,args);
         if (counter != 0) {
-            if (strcmp(args[0], "date") == 0) {
+            if (strcmp(args[0], "date") == 0) {//Comando de fechas falta el caso de sin argumentos
                 if (args[1] != NULL && strcmp(args[1], "-t")==0) {
                     fechat();
                 } else if (args[1] != NULL && strcmp(args[1],"-d")==0){
                     fechad();
-                }else if (args[1] = NULL){
-                    fecha();
-                } else {
+                }else{
                     perror("No se encontro tu comando\n");
                 }
-            } else if (strcmp(args[0],"pid")==0){
-                pid_t pid = getpid();
+            } else if (strcmp(args[0],"pid")==0){//PID
+                pid = getpid();
+                printf("%d\n",pid);
+            }else if(strcmp(args[0],"ppid")==0){
+                pid = getppid();
                 printf("%d\n",pid);
             }
             else if(strcmp(args[0],"cd")==0){//Directorios
@@ -137,7 +192,8 @@ int main(int argc, char** argv){
                 }
             }
             else if(strcmp(args[0],"open")==0){//Comando Open
-                Cmd_open(args,&abiertos);
+                printf("Aqui funcion open\n");
+                //Cmd_open(args,&abiertos);
             }else if (strcmp(args[0],"infosys")==0){
                 infosys();
             }
@@ -154,15 +210,25 @@ int main(int argc, char** argv){
                         perror("No se encontró tu comando\n");
                     }
                 }
-            }else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
+            }else if(strcmp(args[0],"help")==0){
+                if(args[1] != NULL){
+                    help_cmd(args);
+                } else help();
+            }
+            else if(strcmp(args[0],"historic")==0){
+                phistorics(historial,args[1]);
+            }
+            else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
                 printf("Saliendo del shell...\n");
                 free(input);
                 destruye(abiertos);
+                destruye(historial);
                 break;
             }
             else {
                 printf("Comando no reconocido: %s\n", args[0]);
             }
+            historics(args,&historial,&dndhist);
         }
         else{
             perror("Error al escanear la linea.\n");
