@@ -53,48 +53,49 @@ void infosys(){
     printf("version     = %s\n", udata.version);
     printf("maquina     = %s\n", udata.machine);
 }
-void historics(char *args[],TLISTA *history,TNODOLISTA *dndhist){
+void historics(char *args[],TLISTA history,TIPOELEMENTOLISTA *elemento){
     int i = 0;
-    TIPOELEMENTOLISTA elemento;
-    if(esVacia(*history)){
-        elemento.num=0;
+    if(esVacia(history)){
+        elemento->num=0;
     }else{
-        elemento.num = longitud(*history);
+        elemento->num = longitud(history);
     }
     while(args[i]!=NULL){
-        strcat(elemento.cmd,args[i]);
-        strcat(elemento.cmd," ");
+        if (i==0){
+        strncpy(elemento->cmd,args[i],sizeof(elemento->cmd));
+        strcat(elemento->cmd," ");
+        i++;
+        continue;
+        }
+        strncat(elemento->cmd,args[i],20);
+        strcat(elemento->cmd," ");
         i++;
     }
-    elemento.num++;
-    inserta(history,*dndhist,elemento);
-    *dndhist = siguiente(*history,*dndhist);
+    elemento->num++;
 }
-void phistorics(TLISTA history, char *arg){//en el caso de -N quitar el "-" y hacer el bucle
+void phistorics(TLISTA history, char *args){//en el caso de -N quitar el "-" y hacer el bucle
     int num;
-    char nu[3];
     TNODOLISTA nod;
     TIPOELEMENTOLISTA e;
-    if(arg == NULL){
+    if(args == NULL){
     for(nod =primero(history); nod != fin(history);nod=siguiente(history,nod)){
         recupera(history,nod,&e);
         printf("N=%d %s\n",e.num,e.cmd);
     }}
     else{
-        num = atoi(arg);
-        if(num==0){
-            strtok(arg,"-");
-            strcpy(nu,strtok(NULL," "));
-            num = atoi(nu);
-            printf("%d",num);
-            /*for(nod =primero(history); nod != fin(history);nod=siguiente(history,nod)){
-                printf("%d: %s",)
+        num = atoi(args);
+        if(num<0){
+            num = abs(num);
+            /*for(nod=primero(history);nod != fin(history);nod=siguiente(history,nod)){
+                recupera(history,nod,&e);
+                printf()
             }*/
+           printf("Imprime los ultimos -n comandos\n");
         }else{
             for(nod = primero(history);nod!=fin(history);nod=siguiente(history,nod)){
             recupera(history,nod,&e);
             if(e.num==num){
-                printf("%s\n",e.cmd);
+                printf("%s\n",e.cmd);//Repite el comando numero -n
                 //repeat_cmd();
                 break;
             }
@@ -152,7 +153,7 @@ int main(int argc, char** argv){
     pid_t pid;
     int counter;
     char *args[10], wd[25];
-    char *input = malloc(sizeof(char) * 20);
+    char *input = malloc(sizeof(char) * 30);
     TLISTA abiertos, historial;
     //TNODOLISTA dndabiertos;
     crea(&abiertos);
@@ -216,19 +217,21 @@ int main(int argc, char** argv){
                 } else help();
             }
             else if(strcmp(args[0],"historic")==0){
-                phistorics(historial,args[1]);
+            phistorics(historial,args[1]);
             }
             else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
                 printf("Saliendo del shell...\n");
                 free(input);
-                destruye(abiertos);
-                destruye(historial);
+                destruye(&abiertos);
+                destruye(&historial);
                 break;
             }
             else {
                 printf("Comando no reconocido: %s\n", args[0]);
             }
-            historics(args,&historial,&dndhist);
+            historics(args,historial,&e);
+            inserta(&historial,dndhist,e);
+            dndhist = siguiente(historial,dndhist);
         }
         else{
             perror("Error al escanear la linea.\n");
