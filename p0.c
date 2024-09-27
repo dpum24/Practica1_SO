@@ -75,7 +75,7 @@ void historics(char *args[],TLISTA history,TIPOELEMENTOLISTA *elemento){
 }
 void phistorics(TLISTA history, char *args){//en el caso de -N quitar el "-" y hacer el bucle
     int num;
-    TNODOLISTA nod;
+    TNODOLISTA nod, aux;
     TIPOELEMENTOLISTA e;
     if(args == NULL){
     for(nod =primero(history); nod != fin(history);nod=siguiente(history,nod)){
@@ -84,18 +84,21 @@ void phistorics(TLISTA history, char *args){//en el caso de -N quitar el "-" y h
     }}
     else{
         num = atoi(args);
-        if(num<0){
+        if(num<0){//Imprime por pantalla los ultimos -n comandos
             num = abs(num);
-            /*for(nod=primero(history);nod != fin(history);nod=siguiente(history,nod)){
-                recupera(history,nod,&e);
-                printf()
-            }*/
-           printf("Imprime los ultimos -n comandos\n");
+            nod = primero(history);
+            for(int i=0; i!=longitud(history)-num;i++){
+                nod = siguiente(history,nod);
+            }
+            for(aux=nod;aux!=fin(history);aux=siguiente(history,aux)){
+                recupera(history,aux,&e);
+                printf("N=%d %s\n",e.num,e.cmd);
+            }
         }else{
             for(nod = primero(history);nod!=fin(history);nod=siguiente(history,nod)){
             recupera(history,nod,&e);
             if(e.num==num){
-                printf("%s\n",e.cmd);//Repite el comando numero -n
+                printf("%s\n",e.cmd);//Repite el comando numero N
                 //repeat_cmd();
                 break;
             }
