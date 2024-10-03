@@ -8,6 +8,16 @@ CC=gcc -Wall
 #LIBRARIES= -L $(LIBS_FILES_DIR)
 #LIBS = -lvectordinamico
 
+#opciones de compilacion, muestra todos los warnings (-Wall)
+CC=gcc -Wall
+#si incluye una librer a est ndar, en este caso la matematica (fichero libm.a)
+#todas tienen el formato de fichero libNOMBRE.a
+#y  al incluirla en el compilador se pone -lNOMBRE
+#si no hay librerias adicionales, se elimina esta linea
+#LIBS_FILES_DIR=.
+#LIBRARIES= -L $(LIBS_FILES_DIR)
+#LIBS = -lvectordinamico
+
 #carpeta de las cabeceras (si estan en la actual, ponemos .)
 HEADER_FILES_DIR = .
 #opciones de compilacion, indica donde estan los archivos .h
@@ -17,10 +27,10 @@ INCLUDES = -I $(HEADER_FILES_DIR)
 OUTPUT = p0
 
 #ficheros .h.  Si hay varios, se precede cada uno con $(HEADER_FILES_DIR)/
-HEADERS = $(HEADER_FILES_DIR)
+HEADERS = $(HEADER_FILES_DIR)/listas.h
 
 #FUENTES: todos los archivos .c necesarios
-SRCS = p0.c listas.c
+SRCS = p0.c listas.c 
 
 #ficheros .o: todos los .o con un analogo .c en SRCS
 OBJS = $(SRCS:.c=.o)
