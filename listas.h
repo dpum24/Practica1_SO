@@ -1,6 +1,9 @@
 typedef struct TIPOELEMENTOLISTA{
     char cmd[30];
     int num;
+    int filedes;
+    char filename[256]; 
+    int mode;
 }TIPOELEMENTOLISTA;
 
 
