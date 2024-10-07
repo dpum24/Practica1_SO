@@ -183,7 +183,7 @@ void Cmd_open(char *tr[], TLISTA abiertos, TIPOELEMENTOLISTA *elemento, int *con
             return;
         }
 
-        elemento->mode = flags;  // Guardar las banderas obtenidas
+        elemento->mode = flags;
         *control = 1;  // Indicar que la operación fue exitosa
     }
 }
@@ -339,14 +339,16 @@ void file_start(TLISTA *abiertos){
 int main(int argc, char** argv){
     TIPOELEMENTOLISTA e;
     pid_t pid;
-    int counter, control;
-    char *args[10], wd[25];
+    DIR *dir;
+    struct stat buf;
+    struct dirent *ent;
+    int counter, control, df;
+    char *args[20], wd[40], path[256];
     char *input = malloc(sizeof(char) * 30);
     TLISTA abiertos, historial;
     crea(&abiertos);
     crea(&historial);
     file_start(&abiertos);
-    getcwd(wd,sizeof(wd));
     TNODOLISTA dndhist = primero(historial);
     TNODOLISTA dndfile = fin(abiertos);
     while(1){
@@ -371,6 +373,7 @@ int main(int argc, char** argv){
             }
             else if(strcmp(args[0],"cd")==0){//Directorios
                 if (args[1] == NULL){
+                getcwd(wd,sizeof(wd));
                 printf("%s\n",wd);
                 }else{//Si recibimos argumentos, cambiar al directorio si existe
                     if(chdir(args[1])==-1){
@@ -420,17 +423,54 @@ int main(int argc, char** argv){
             phistorics(historial,args[1]);//Acceso a la lista de comandos introducidos
             }else if(strcmp(args[0],"makefile")==0){
                 if (args[1]==NULL){
+                    getcwd(wd,sizeof(wd));
                     printf("%s\n",wd);
                 }else{
-                    creat(args[1],O_RDWR);
+                    df = creat(args[1],O_RDWR);
+                    strcpy(e.filename,args[1]);
+                    e.mode = O_RDWR;
+                    e.filedes = df;
+                    inserta(&abiertos,fin(abiertos),e);
                 }
             }else if(strcmp(args[0],"makedir")==0){
                 if (args[1]==NULL){
+                    getcwd(wd,sizeof(wd));
                     printf("%s\n",wd);
                 }else{
                     mkdir(args[1],0777);
+                    opendir(args[1]);
                 }
+            }else if (strcmp(args[0],"listdir")==0){
+                    //primero directorio y luego argumentos
+                    if(args[1]!=NULL){
+                    if (strcmp(args[1],"-hid")==0){
+                       
+                    }else if (strcmp(args[1],"-acc")==0){
+                    }else if (strcmp(args[1],"-link")==0){
+
+                    }else{
+                        dir = opendir(args[1]);
+                        ent = readdir(dir);
+                        if(dir == NULL){
+                            perror("No se pudo abrir directorio.\n");
+                            continue;
+                        }
+                        while((ent = readdir(dir)) != NULL){
+                            if(stat(args[1],&buf) == -1){
+                                perror("Error al abrir el archivo\n");
+                                continue;
+                            }
+                            printf("%lu\t%s\n",ent->d_ino,ent->d_name);
+                            //sino buf.st_ino/buf.st_size
+                        }
+                        closedir(dir);
+                    }
+                    }else{
+                        printf("Directorio actual.\n");
+                    }
+
             }else if(strcmp(args[0],"cwd")==0){
+                    getcwd(wd,sizeof(wd));
                     printf("%s\n",wd);
             }
             else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
