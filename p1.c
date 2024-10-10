@@ -6,7 +6,8 @@
 #include <sys/utsname.h>  
 #include <unistd.h> 
 #include <fcntl.h>
-#include "listas.h"
+#include "abiertolista.h"
+#include "listahist.h"
 
 void authors(){
     printf("Rubén Sayáns Fortes, ruben.sayans@udc.es\nDiego Emilio Pumarol Guerrero, diego.pumarol@udc.es\n");
@@ -54,12 +55,12 @@ void infosys(){
     printf("version     = %s\n", udata.version);
     printf("maquina     = %s\n", udata.machine);
 }
-void historics(char *args[],TLISTA history,TIPOELEMENTOLISTA *elemento){
+void historics(char *args[],HIST history,COMMAND *elemento){
     int i = 0;
-    if(esVacia(history)){
+    if(esVaciahist(history)){
         elemento->num=0;
     }else{
-        elemento->num = longitud(history);
+        elemento->num = longitudhist(history);
     }
     while(args[i]!=NULL){
         if (i==0){
@@ -75,43 +76,43 @@ void historics(char *args[],TLISTA history,TIPOELEMENTOLISTA *elemento){
     elemento->num++;
 }
 
-void listar_abiertos(TLISTA abiertos){
+void listar_abiertos(ABIERTOLISTA abiertos){
     TNODOLISTA nod; 
-    TIPOELEMENTOLISTA e;
+    FILES f;
     if (!esVacia(abiertos)){//si no es vacia
         for(nod=primero(abiertos); nod != fin(abiertos);nod=siguiente(abiertos,nod)){
-        recupera(abiertos,nod,&e);
-        printf("File Descriptor= %d -> %s %d\n",e.filedes,e.filename,e.mode);
+        recupera(abiertos,nod,&f);
+        printf("File Descriptor= %d -> %s %d\n",f.filedes,f.filename,f.mode);
     }
     }else{
         printf("No hay ningun archivo abierto\n");
         }
 }
 
-void phistorics(TLISTA history, char *args){//en el caso de -N quitar el "-" y hacer el bucle
+void phistorics(HIST history, char *args){//en el caso de -N quitar el "-" y hacer el bucle
     int num;
-    TNODOLISTA nod, aux;
-    TIPOELEMENTOLISTA e;
+    TNODOHIST nod, aux;
+    COMMAND e;
     if(args == NULL){
-    for(nod =primero(history); nod != fin(history);nod=siguiente(history,nod)){
-        recupera(history,nod,&e);
+    for(nod =primerohist(history); nod != finhist(history);nod=siguientehist(history,nod)){
+        recuperahist(history,nod,&e);
         printf("N=%d %s\n",e.num,e.cmd);
     }}
     else{
         num = atoi(args);
         if(num<0){//Imprime por pantalla los ultimos -n comandos
             num = abs(num);
-            nod = primero(history);
-            for(int i=0; i!=longitud(history)-num;i++){
-                nod = siguiente(history,nod);
+            nod = primerohist(history);
+            for(int i=0; i!=longitudhist(history)-num;i++){
+                nod = siguientehist(history,nod);
             }
-            for(aux=nod;aux!=fin(history);aux=siguiente(history,aux)){
-                recupera(history,aux,&e);
+            for(aux=nod;aux!=fin(history);aux=siguientehist(history,aux)){
+                recuperahist(history,aux,&e);
                 printf("N=%d %s\n",e.num,e.cmd);
             }
         }else{
-            for(nod = primero(history);nod!=fin(history);nod=siguiente(history,nod)){
-            recupera(history,nod,&e);
+            for(nod = primerohist(history);nod!=finhist(history);nod=siguientehist(history,nod)){
+            recuperahist(history,nod,&e);
             if(e.num==num){
                 printf("%s\n",e.cmd);//Repite el comando numero N
                 //repeat_cmd();
@@ -125,9 +126,7 @@ void phistorics(TLISTA history, char *args){//en el caso de -N quitar el "-" y h
 #include <string.h>
 #include <stdio.h>
 
-// Definiciones necesarias de TLISTA y TIPOELEMENTOLISTA, se asume que ya están disponibles
-
-void Cmd_open(char *tr[], TLISTA abiertos, TIPOELEMENTOLISTA *elemento, int *control) {
+void Cmd_open(char *tr[], ABIERTOLISTA abiertos, FILES *elemento, int *control) {
     int df, mode = 0;
 
     // Si no se especifica un nombre de fichero, listar los archivos abiertos
@@ -148,7 +147,7 @@ void Cmd_open(char *tr[], TLISTA abiertos, TIPOELEMENTOLISTA *elemento, int *con
     if (!strcmp(tr[2], "cr")) {
         mode |= O_CREAT;
     } else if (!strcmp(tr[2], "ex")) {
-        mode |= O_CREAT | O_EXCL;  // O_EXCL se usa con O_CREAT para prevenir sobreescritura
+        mode |= O_CREAT | O_EXCL; 
     } else if (!strcmp(tr[2], "ro")) {
         mode |= O_RDONLY;  // Solo lectura
     } else if (!strcmp(tr[2], "wo")) {
@@ -173,8 +172,6 @@ void Cmd_open(char *tr[], TLISTA abiertos, TIPOELEMENTOLISTA *elemento, int *con
         // Configurar la estructura elemento con la información del archivo abierto
         strcpy(elemento->filename, tr[1]);
         elemento->filedes = df;
-
-        // Obtener las banderas actuales del descriptor de archivo
         int flags = fcntl(df, F_GETFL);
         if (flags == -1) {
             perror("Error al obtener las banderas del archivo");
@@ -183,16 +180,16 @@ void Cmd_open(char *tr[], TLISTA abiertos, TIPOELEMENTOLISTA *elemento, int *con
             return;
         }
 
-        elemento->mode = flags;
+        elemento->mode = flags; 
         *control = 1;  // Indicar que la operación fue exitosa
     }
 }
 
 
-void Cmd_close (char *tr[], TLISTA *abiertos){ 
+void Cmd_close (char *tr[], ABIERTOLISTA *abiertos){ 
     int df;
     TNODOLISTA nod;
-    TIPOELEMENTOLISTA e;
+    FILES e;
     if (tr[1]==NULL || (df=atoi(tr[1]))<0){ 
       listar_abiertos(*abiertos);// el descriptor es menor que 0
         return;
@@ -256,10 +253,10 @@ void help_cmd(char * args[]){
         printf("Finaliza la shell.\n");
     }
 }
-void Cmd_dup(char *tr[], TLISTA *abiertos) {
+void Cmd_dup(char *tr[], ABIERTOLISTA *abiertos) {
     int df, duplicado;
-    TIPOELEMENTOLISTA elemento, nuevoElemento;
-    char aux[232], *p = NULL;
+    FILES elemento, nuevoElemento;
+    char aux[512], *p = NULL;
 
     // Validar si el descriptor de archivo proporcionado es correcto
     if (tr[1] == NULL || (df = atoi(tr[1])) < 0) {
@@ -289,17 +286,15 @@ void Cmd_dup(char *tr[], TLISTA *abiertos) {
         close(duplicado); // Cerrar el descriptor duplicado si no se encuentra el original
         return;
     }
-
-    // Crear la descripción del archivo duplicado
     sprintf(aux, "dup %d (%s)", df, p);
 
-    nuevoElemento.filedes = duplicado;           // Asignar el nuevo descriptor
+    nuevoElemento.filedes = duplicado;      
     strcpy(nuevoElemento.filename, aux);         // Copiar la descripción del archivo duplicado
-    nuevoElemento.mode = fcntl(duplicado, F_GETFL); // Obtener las banderas del archivo duplicado
+    nuevoElemento.mode = fcntl(duplicado, F_GETFL);
 
     if (nuevoElemento.mode == -1) {
         perror("Error al obtener las banderas del archivo duplicado");
-        close(duplicado); // Cerrar el descriptor duplicado si hay un error con las banderas
+        close(duplicado); // Cerrar el descriptor duplicado si hay un error
         return;
     }
 
@@ -308,8 +303,8 @@ void Cmd_dup(char *tr[], TLISTA *abiertos) {
 }
 
 
-void file_start(TLISTA *abiertos){
-    TIPOELEMENTOLISTA elemento;
+void file_start(ABIERTOLISTA *abiertos){
+    FILES elemento;
     TNODOLISTA dndfile=primero(*abiertos);
     int df;
     //Para entrada
@@ -337,7 +332,8 @@ void file_start(TLISTA *abiertos){
     dndfile = siguiente(*abiertos,dndfile);
 }
 int main(int argc, char** argv){
-    TIPOELEMENTOLISTA e;
+    COMMAND c;
+    FILES f;
     pid_t pid;
     DIR *dir;
     struct stat buf;
@@ -345,11 +341,12 @@ int main(int argc, char** argv){
     int counter, control, df;
     char *args[20], wd[40], path[256];
     char *input = malloc(sizeof(char) * 30);
-    TLISTA abiertos, historial;
+    ABIERTOLISTA abiertos;
+    HIST historial;
     crea(&abiertos);
-    crea(&historial);
+    creahist(&historial);
     file_start(&abiertos);
-    TNODOLISTA dndhist = primero(historial);
+    TNODOHIST dndhist = primerohist(historial);
     TNODOLISTA dndfile = fin(abiertos);
     while(1){
         printf("->");
@@ -385,9 +382,9 @@ int main(int argc, char** argv){
                 }
             }
             else if(strcmp(args[0],"open")==0){//Comando Open
-                Cmd_open(args,abiertos,&e,&control);//Guarda en "e" los elemetnos del archivo abierto
+                Cmd_open(args,abiertos,&f,&control);//Guarda en "e" los elemetnos del archivo abierto
                 if(control==1){
-                inserta(&abiertos,dndfile,e);//Insertamos los elementos del archivo en la lista "abiertos"
+                inserta(&abiertos,dndfile,f);//Insertamos los elementos del archivo en la lista "abiertos"
                 dndfile = siguiente(abiertos,dndfile);
                 }
             }else if (strcmp(args[0],"close")==0){//Comando Close
@@ -427,10 +424,10 @@ int main(int argc, char** argv){
                     printf("%s\n",wd);
                 }else{
                     df = creat(args[1],O_RDWR);
-                    strcpy(e.filename,args[1]);
-                    e.mode = O_RDWR;
-                    e.filedes = df;
-                    inserta(&abiertos,fin(abiertos),e);
+                    strcpy(f.filename,args[1]);
+                    f.mode = O_RDWR;
+                    f.filedes = df;
+                    inserta(&abiertos,fin(abiertos),f);
                 }
             }else if(strcmp(args[0],"makedir")==0){
                 if (args[1]==NULL){
@@ -477,15 +474,15 @@ int main(int argc, char** argv){
                 printf("Saliendo del shell...\n");
                 free(input);//Al salir liberamos memoria
                 destruye(&abiertos);
-                destruye(&historial);
+                destruyehist(&historial);
                 break;
             }
             else {
                 printf("Comando no reconocido: %s\n", args[0]);
             }
-            historics(args,historial,&e);//Con cada iteracion del shell, guardamos en la lista de historial los comandos introducidos
-            inserta(&historial,dndhist,e);
-            dndhist = siguiente(historial,dndhist);
+            historics(args,historial,&c);//Con cada iteracion del shell, guardamos en la lista de historial los comandos introducidos
+            insertahist(&historial,dndhist,c);
+            dndhist = siguientehist(historial,dndhist);
         }
         else{
             perror("Error al escanear la linea.\n");
