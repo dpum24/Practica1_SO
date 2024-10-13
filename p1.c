@@ -3,11 +3,13 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/utsname.h>  
-#include <unistd.h> 
+#include <sys/utsname.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h>
-#include "abiertolista.h"
+#include <dirent.h>
 #include "listahist.h"
+#include "abiertolista.h"
 
 void authors(){
     printf("Rubén Sayáns Fortes, ruben.sayans@udc.es\nDiego Emilio Pumarol Guerrero, diego.pumarol@udc.es\n");
@@ -77,7 +79,7 @@ void historics(char *args[],HIST history,COMMAND *elemento){
 }
 
 void listar_abiertos(ABIERTOLISTA abiertos){
-    TNODOLISTA nod; 
+    TNODOLISTA nod;
     FILES f;
     if (!esVacia(abiertos)){//si no es vacia
         for(nod=primero(abiertos); nod != fin(abiertos);nod=siguiente(abiertos,nod)){
@@ -122,9 +124,7 @@ void phistorics(HIST history, char *args){//en el caso de -N quitar el "-" y hac
         }
     }
 }
-#include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
+
 
 void Cmd_open(char *tr[], ABIERTOLISTA abiertos, FILES *elemento, int *control) {
     int df, mode = 0;
@@ -147,7 +147,7 @@ void Cmd_open(char *tr[], ABIERTOLISTA abiertos, FILES *elemento, int *control) 
     if (!strcmp(tr[2], "cr")) {
         mode |= O_CREAT;
     } else if (!strcmp(tr[2], "ex")) {
-        mode |= O_CREAT | O_EXCL; 
+        mode |= O_CREAT | O_EXCL;
     } else if (!strcmp(tr[2], "ro")) {
         mode |= O_RDONLY;  // Solo lectura
     } else if (!strcmp(tr[2], "wo")) {
@@ -180,17 +180,17 @@ void Cmd_open(char *tr[], ABIERTOLISTA abiertos, FILES *elemento, int *control) 
             return;
         }
 
-        elemento->mode = flags; 
+        elemento->mode = flags;
         *control = 1;  // Indicar que la operación fue exitosa
     }
 }
 
 
-void Cmd_close (char *tr[], ABIERTOLISTA *abiertos){ 
+void Cmd_close (char *tr[], ABIERTOLISTA *abiertos){
     int df;
     TNODOLISTA nod;
     FILES e;
-    if (tr[1]==NULL || (df=atoi(tr[1]))<0){ 
+    if (tr[1]==NULL || (df=atoi(tr[1]))<0){
       listar_abiertos(*abiertos);// el descriptor es menor que 0
         return;
     }
@@ -208,7 +208,7 @@ void Cmd_close (char *tr[], ABIERTOLISTA *abiertos){
        suprime(abiertos,nod);
     }
 }
-int TrocearCadena(char * cadena, char * trozos[]){ 
+int TrocearCadena(char * cadena, char * trozos[]){
     int i=1;
     if ((trozos[0]=strtok(cadena," \n\t"))==NULL)
     return 0;
@@ -288,7 +288,7 @@ void Cmd_dup(char *tr[], ABIERTOLISTA *abiertos) {
     }
     sprintf(aux, "dup %d (%s)", df, p);
 
-    nuevoElemento.filedes = duplicado;      
+    nuevoElemento.filedes = duplicado;
     strcpy(nuevoElemento.filename, aux);         // Copiar la descripción del archivo duplicado
     nuevoElemento.mode = fcntl(duplicado, F_GETFL);
 
@@ -308,7 +308,7 @@ void file_start(ABIERTOLISTA *abiertos){
     TNODOLISTA dndfile=primero(*abiertos);
     int df;
     //Para entrada
-    elemento.filedes = STDIN_FILENO; 
+    elemento.filedes = STDIN_FILENO;
     strcpy(elemento.filename, "entrada estandard");
     df = fcntl(STDIN_FILENO, F_GETFL);
     elemento.mode=df;
@@ -331,7 +331,17 @@ void file_start(ABIERTOLISTA *abiertos){
     inserta(abiertos,dndfile,elemento);
     dndfile = siguiente(*abiertos,dndfile);
 }
-int main(int argc, char** argv){
+
+void Cmd_cwd() {
+    char wd[PATH_MAX];
+    if (getcwd(wd, sizeof(wd)) != NULL) {
+        printf("%s\n", wd);
+    } else {
+        perror("Error al obtener el directorio de trabajo"); // Manejo de errores
+    }
+}
+
+int main(int argc, char** argv) {
     COMMAND c;
     FILES f;
     pid_t pid;
@@ -348,10 +358,10 @@ int main(int argc, char** argv){
     file_start(&abiertos);
     TNODOHIST dndhist = primerohist(historial);
     TNODOLISTA dndfile = fin(abiertos);
-    while(1){
+    while(1) {
         printf("->");
         fgets(input, 20, stdin);
-        counter = TrocearCadena(input,args);//Trocea "input" en el array de strings "args" 
+        counter = TrocearCadena(input,args);//Trocea "input" en el array de strings "args"
         if (counter != 0) {
             if (strcmp(args[0], "date") == 0) {//Comando de fechas falta el caso de sin argumentos
                 if (args[1] != NULL && strcmp(args[1], "-t")==0) {
@@ -370,8 +380,8 @@ int main(int argc, char** argv){
             }
             else if(strcmp(args[0],"cd")==0){//Directorios
                 if (args[1] == NULL){
-                getcwd(wd,sizeof(wd));
-                printf("%s\n",wd);
+                    getcwd(wd,sizeof(wd));
+                    printf("%s\n",wd);
                 }else{//Si recibimos argumentos, cambiar al directorio si existe
                     if(chdir(args[1])==-1){
                         printf("Error al encontrar el directorio %s\n",args[1]);
@@ -384,8 +394,8 @@ int main(int argc, char** argv){
             else if(strcmp(args[0],"open")==0){//Comando Open
                 Cmd_open(args,abiertos,&f,&control);//Guarda en "e" los elemetnos del archivo abierto
                 if(control==1){
-                inserta(&abiertos,dndfile,f);//Insertamos los elementos del archivo en la lista "abiertos"
-                dndfile = siguiente(abiertos,dndfile);
+                    inserta(&abiertos,dndfile,f);//Insertamos los elementos del archivo en la lista "abiertos"
+                    dndfile = siguiente(abiertos,dndfile);
                 }
             }else if (strcmp(args[0],"close")==0){//Comando Close
                 Cmd_close(args,&abiertos);
@@ -417,7 +427,7 @@ int main(int argc, char** argv){
                 } else help();//Imprime por pantalla todos los comandos disponibles
             }
             else if(strcmp(args[0],"historic")==0){
-            phistorics(historial,args[1]);//Acceso a la lista de comandos introducidos
+                phistorics(historial,args[1]);//Acceso a la lista de comandos introducidos
             }else if(strcmp(args[0],"makefile")==0){
                 if (args[1]==NULL){
                     getcwd(wd,sizeof(wd));
@@ -438,10 +448,10 @@ int main(int argc, char** argv){
                     opendir(args[1]);
                 }
             }else if (strcmp(args[0],"listdir")==0){
-                    //primero directorio y luego argumentos
-                    if(args[1]!=NULL){
+                //primero directorio y luego argumentos
+                if(args[1]!=NULL){
                     if (strcmp(args[1],"-hid")==0){
-                       
+
                     }else if (strcmp(args[1],"-acc")==0){
                     }else if (strcmp(args[1],"-link")==0){
 
@@ -462,13 +472,21 @@ int main(int argc, char** argv){
                         }
                         closedir(dir);
                     }
-                    }else{
-                        printf("Directorio actual.\n");
-                    }
+                }else{
+                    printf("Directorio actual.\n");
+                }
 
-            }else if(strcmp(args[0],"cwd")==0){
-                    getcwd(wd,sizeof(wd));
-                    printf("%s\n",wd);
+            }else if (strcmp(args[0], "cwd") == 0) {
+                if (args[1] != NULL) {
+                    fprintf(stderr, "Error: El comando 'cwd' no acepta argumentos.\n");
+                } else {
+                    char wd[PATH_MAX];
+                    if (getcwd(wd, sizeof(wd)) != NULL) {
+                        printf("%s\n", wd);
+                    } else {
+                        perror("Error al obtener el directorio de trabajo");
+                    }
+                }
             }
             else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
                 printf("Saliendo del shell...\n");
@@ -484,7 +502,7 @@ int main(int argc, char** argv){
             insertahist(&historial,dndhist,c);
             dndhist = siguientehist(historial,dndhist);
         }
-        else{
+        else {
             perror("Error al escanear la linea.\n");
         }
     }
