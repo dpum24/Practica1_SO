@@ -341,6 +341,24 @@ void Cmd_cwd() {
     }
 }
 
+void makefile(char *args[]) {
+    char filename[100];
+    FILE *file;
+
+    strcpy(filename, args[1]);
+    file = fopen(filename, "w");
+
+    if (file == NULL) {
+        perror("Error al abrir el archivo");
+        return;
+    }
+
+    // Cerrar el archivo
+    if (fclose(file) != 0) {
+        perror("Error al cerrar el archivo");
+    }
+}
+
 int main(int argc, char** argv) {
     COMMAND c;
     FILES f;
@@ -428,17 +446,6 @@ int main(int argc, char** argv) {
             }
             else if(strcmp(args[0],"historic")==0){
                 phistorics(historial,args[1]);//Acceso a la lista de comandos introducidos
-            }else if(strcmp(args[0],"makefile")==0){
-                if (args[1]==NULL){
-                    getcwd(wd,sizeof(wd));
-                    printf("%s\n",wd);
-                }else{
-                    df = creat(args[1],O_RDWR);
-                    strcpy(f.filename,args[1]);
-                    f.mode = O_RDWR;
-                    f.filedes = df;
-                    inserta(&abiertos,fin(abiertos),f);
-                }
             }else if(strcmp(args[0],"makedir")==0){
                 if (args[1]==NULL){
                     getcwd(wd,sizeof(wd));
@@ -487,8 +494,14 @@ int main(int argc, char** argv) {
                         perror("Error al obtener el directorio de trabajo");
                     }
                 }
-            }
-            else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
+            } else if(strcmp(args[0], "makefile") == 0 && args[1] != NULL) {
+                makefile(args);
+            } else if(strcmp(args[0], "makefile") == 0) {
+                char wd[PATH_MAX];
+                if (getcwd(wd, sizeof(wd)) != NULL) {
+                    printf("%s\n", wd);
+                }
+            }else if (strcmp(args[0],"exit")==0 || strcmp(args[0],"bye")==0 || strcmp(args[0],"quit")==0) {//Sale del shell
                 printf("Saliendo del shell...\n");
                 free(input);//Al salir liberamos memoria
                 destruye(&abiertos);
