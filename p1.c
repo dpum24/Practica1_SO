@@ -454,34 +454,98 @@ int main(int argc, char** argv) {
                     mkdir(args[1],0777);
                     opendir(args[1]);
                 }
-            }else if (strcmp(args[0],"listdir")==0){
-                //primero directorio y luego argumentos
-                if(args[1]!=NULL){
-                    if (strcmp(args[1],"-hid")==0){
-
-                    }else if (strcmp(args[1],"-acc")==0){
-                    }else if (strcmp(args[1],"-link")==0){
-
-                    }else{
-                        dir = opendir(args[1]);
-                        ent = readdir(dir);
-                        if(dir == NULL){
-                            perror("No se pudo abrir directorio.\n");
+            }else if (strcmp(args[0], "listdir") == 0) {
+                char ruta_completa[1024];
+                if (args[1] == NULL) {
+                    getcwd(wd, sizeof(wd));
+                    printf("%s\n", wd);
+                } else {
+                    if (args[2] != NULL) {
+                        if (strcmp(args[1], "-hid") == 0) {
+                            dir = opendir(args[2]);
+                        if (dir == NULL) {
+                            perror("No se pudo abrir el directorio.\n");
                             continue;
                         }
-                        while((ent = readdir(dir)) != NULL){
-                            if(stat(args[1],&buf) == -1){
-                                perror("Error al abrir el archivo\n");
+                        // Recorre las entradas en el directorio
+                        while ((ent = readdir(dir)) != NULL) {
+                            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
                                 continue;
                             }
-                            printf("%lu\t%s\n",ent->d_ino,ent->d_name);
-                            //sino buf.st_ino/buf.st_size
+                            snprintf(ruta_completa, sizeof(ruta_completa), "%s/%s", args[2], ent->d_name);
+                            if (stat(ruta_completa, &buf) == -1) {
+                                perror("Error al obtener información del archivo\n");
+                                continue;
+                            }
+                            printf("%lu\t%s\n", buf.st_size, ent->d_name);
+                        }
+                        closedir(dir);
+                        } else if (strcmp(args[1], "-acc") == 0) { // Tiempo de acceso
+                            dir = opendir(args[2]);
+                            while ((ent = readdir(dir)) != NULL) {
+                                if (stat(args[2], &buf) == -1) {
+                                    perror("Error al abrir el archivo\n");
+                                    continue;
+                                }
+                                if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+                                    continue;
+                                }
+                                struct tm *tm_info = localtime(&buf.st_atime);
+                                strftime(buffer, sizeof(buffer), "%d/%m/%Y", tm_info);
+                                printf("%s Último acceso: %s\n", ent->d_name, buffer);
+                            }
+                        } else if (strcmp(args[1], "-link") == 0) { // Si es enlace simbolico, mostrar directorio a que apunta
+                            while ((ent = readdir(dir)) != NULL) {
+                                if (lstat(args[2], &buf) == -1) {
+                                    perror("Error al abrir el archivo\n");
+                                    continue;
+                                }
+                                if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+                                    continue;
+                                }
+                                if (S_ISLNK(buf.st_mode)) {
+                                    ssize_t len = readlink(ruta_completa, path, sizeof(path) - 1);
+                                    if (len == -1) {
+                                        perror("Error al leer el enlace simbólico");
+                                    } else {
+                                        path[len] = '\0';  // Añadir terminador nulo
+                                        printf("El enlace simbólico %s apunta a %s\n", ent->d_name, path);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        dir = opendir(args[1]);
+                        if (dir == NULL) {
+                            perror("No se pudo abrir el directorio.\n");
+                            continue;
+                        }
+                        while ((ent = readdir(dir)) != NULL) {
+                            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+                                continue;
+                            }
+                            snprintf(ruta_completa, sizeof(ruta_completa), "%s/%s", args[1], ent->d_name);
+                            if (stat(ruta_completa, &buf) == -1) {
+                                perror("Error al obtener información del archivo\n");
+                                continue;
+                            }
+                            printf("%lu\t%s\n", buf.st_size, ent->d_name);
                         }
                         closedir(dir);
                     }
-                }else{
-                    printf("Directorio actual.\n");
                 }
+            } else if (strcmp(args[0], "erase") == 0) {
+                if (args[1] != NULL) {
+                    i = 1;
+                    while (args[i] != NULL) {
+                        remove(args[i]);
+                        i++;
+                    }
+                } else {
+                    getcwd(wd, sizeof(wd));
+                    printf("%s\n", wd);
+                }
+            }
 
             }else if (strcmp(args[0], "cwd") == 0) {
                 if (args[1] != NULL) {
