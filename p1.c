@@ -359,6 +359,140 @@ void makefile(char *args[]) {
     }
 }
 
+void listdir(char *path) {
+    struct dirent *ent;
+    struct stat strat;
+    DIR *dir;
+    char ruta_completa[1024];
+    char buffer[80];  // Para formatear la fecha de acceso
+
+    dir = opendir(path);
+    if (dir == NULL) {
+        perror("No se pudo abrir el directorio");
+        return;
+    }
+
+        // Recorre las entradas del directorio
+        while ((ent = readdir(dir)) != NULL) {
+            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+                continue;
+            }
+            snprintf(ruta_completa, sizeof(ruta_completa), "%s/%s", path, ent->d_name);
+            if (stat(ruta_completa, &strat) == -1) {
+                perror("Error al obtener información del archivo");
+                continue;
+            }
+            printf("%lu\t%s\n", strat.st_size, ent->d_name);
+        }
+    closedir(dir);
+}
+
+void listdirrec(char *path) {
+    struct dirent *ent;
+    struct stat strat;
+    DIR *dir;
+    char ruta_completa[1024];
+    dir = opendir(path);
+    if (dir == NULL) {
+        perror("No se pudo abrir el directorio");
+        return;
+    }
+    printf("************%s\n", path);
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+            continue;
+        }
+        snprintf(ruta_completa, sizeof(ruta_completa), "%s/%s", path, ent->d_name);
+        if (stat(ruta_completa, &strat) == -1) {
+            perror("Error al obtener información del archivo");
+            continue;
+        }
+        
+        // Si es un directorio, hacer llamada recursiva
+        if (S_ISDIR(strat.st_mode)) {
+            listdirrec(ruta_completa);
+        } else {
+            printf("%lu  %s\n", strat.st_size, ent->d_name);
+        }
+    }
+    closedir(dir);
+}
+char LetraTF (mode_t m) {
+    switch (m & __S_IFMT) {  
+        case __S_IFSOCK: return 's'; 
+        case __S_IFLNK:  return 'l';
+        case __S_IFREG:  return '-';  
+        case __S_IFBLK:  return 'b';  
+        case __S_IFDIR:  return 'd'; 
+        case __S_IFCHR:  return 'c';  
+        case __S_IFIFO:  return 'p';
+        default:         return '?'; 
+    }
+}
+
+char* ConvierteModo(mode_t m)
+{
+    static char permisos[12];
+    strcpy (permisos,"---------- ");
+    
+    permisos[0]=LetraTF(m);
+    if (m&S_IRUSR) permisos[1]='r';    /*propietario*/
+    if (m&S_IWUSR) permisos[2]='w';
+    if (m&S_IXUSR) permisos[3]='x';
+    if (m&S_IRGRP) permisos[4]='r';    /*grupo*/
+    if (m&S_IWGRP) permisos[5]='w';
+    if (m&S_IXGRP) permisos[6]='x';
+    if (m&S_IROTH) permisos[7]='r';    /*resto*/
+    if (m&S_IWOTH) permisos[8]='w';
+    if (m&S_IXOTH) permisos[9]='x';
+    if (m&S_ISUID) permisos[3]='s';    /*setuid, setgid y stickybit*/
+    if (m&S_ISGID) permisos[6]='s';
+    if (m&__S_ISVTX) permisos[9]='t';
+    
+    return permisos;
+}
+
+void longlistdirrec(char* path){
+    struct dirent *ent;
+    struct stat strat;
+    DIR *dir;
+    char ruta_completa[1024];
+    char buffer[80];
+    char* permisos;
+    dir = opendir(path);
+    if (dir == NULL) {
+        perror("No se pudo abrir el directorio");
+        return;
+    }
+    printf("************%s\n", path);
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+            continue;
+        }
+        snprintf(ruta_completa, sizeof(ruta_completa), "%s/%s", path, ent->d_name);
+        if (stat(ruta_completa, &strat) == -1) {
+            perror("Error al obtener información del archivo");
+            continue;
+        }
+        if (S_ISDIR(strat.st_mode)) {
+            longlistdirrec(ruta_completa);
+        } else {
+            struct tm *tm_info = localtime(&strat.st_atime);
+            strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M:%S", tm_info);
+            printf("%s %lu  %lu %u  %u  %s  %lu  %s\n", 
+                   buffer,
+                   strat.st_nlink,
+                   strat.st_ino,                        
+                   strat.st_gid,             
+                   strat.st_uid,
+                   ConvierteModo(strat.st_mode),             
+                   strat.st_size,                
+                   ent->d_name);
+        }
+    }
+    closedir(dir);
+}
+
 int main(int argc, char** argv) {
     COMMAND c;
     FILES f;
@@ -462,38 +596,9 @@ int main(int argc, char** argv) {
                 } else {
                     if (args[2] != NULL) {
                         if (strcmp(args[1], "-hid") == 0) {
-                            dir = opendir(args[2]);
-                        if (dir == NULL) {
-                            perror("No se pudo abrir el directorio.\n");
-                            continue;
-                        }
-                        // Recorre las entradas en el directorio
-                        while ((ent = readdir(dir)) != NULL) {
-                            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
-                                continue;
-                            }
-                            snprintf(ruta_completa, sizeof(ruta_completa), "%s/%s", args[2], ent->d_name);
-                            if (stat(ruta_completa, &buf) == -1) {
-                                perror("Error al obtener información del archivo\n");
-                                continue;
-                            }
-                            printf("%lu\t%s\n", buf.st_size, ent->d_name);
-                        }
-                        closedir(dir);
+                            listdir(args[2]);
                         } else if (strcmp(args[1], "-acc") == 0) { // Tiempo de acceso
-                            dir = opendir(args[2]);
-                            while ((ent = readdir(dir)) != NULL) {
-                                if (stat(args[2], &buf) == -1) {
-                                    perror("Error al abrir el archivo\n");
-                                    continue;
-                                }
-                                if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
-                                    continue;
-                                }
-                                struct tm *tm_info = localtime(&buf.st_atime);
-                                strftime(buffer, sizeof(buffer), "%d/%m/%Y", tm_info);
-                                printf("%s Último acceso: %s\n", ent->d_name, buffer);
-                            }
+                           listdiracc(args[2]);
                         } else if (strcmp(args[1], "-link") == 0) { // Si es enlace simbolico, mostrar directorio a que apunta
                             while ((ent = readdir(dir)) != NULL) {
                                 if (lstat(args[2], &buf) == -1) {
@@ -515,26 +620,18 @@ int main(int argc, char** argv) {
                             }
                         }
                     } else {
-                        dir = opendir(args[1]);
-                        if (dir == NULL) {
-                            perror("No se pudo abrir el directorio.\n");
-                            continue;
-                        }
-                        while ((ent = readdir(dir)) != NULL) {
-                            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
-                                continue;
-                            }
-                            snprintf(ruta_completa, sizeof(ruta_completa), "%s/%s", args[1], ent->d_name);
-                            if (stat(ruta_completa, &buf) == -1) {
-                                perror("Error al obtener información del archivo\n");
-                                continue;
-                            }
-                            printf("%lu\t%s\n", buf.st_size, ent->d_name);
-                        }
-                        closedir(dir);
+                        listdir(args[1]);
                     }
                 }
-            } else if (strcmp(args[0], "erase") == 0) {
+            }else if(strcmp(args[0],"reclist")==0){
+                //Es igual que listdir, primero (-acc,-link,-long,-hid) luego directorio
+                if (strcmp(args[1],"-long")==0){
+                    longlistdirrec(args[2]);
+                }
+                else{
+                    listdirrec(args[1]);
+                }
+            }else if (strcmp(args[0], "erase") == 0) {
                 if (args[1] != NULL) {
                     i = 1;
                     while (args[i] != NULL) {
