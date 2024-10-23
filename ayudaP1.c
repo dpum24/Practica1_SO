@@ -12,6 +12,7 @@
 #include <linux/stat.h>
 #include <pwd.h> 
 #include <grp.h>
+#include <errno.h>
 #include "abiertolista.h"
 #include "listahist.h"
 
@@ -107,7 +108,7 @@ void Cmd_open(char *tr[], ABIERTOLISTA abiertos, FILES *elemento, int *control) 
 
     // Comprobar si el modo de apertura ha sido especificado
     if (tr[2] == NULL) {
-        fprintf(stderr, "Error: Modo de apertura no especificado.\n");
+        perror("Modo de apertura no especificado");
         *control = 0;  // Error al no proporcionar el modo
         return;
     }
@@ -128,13 +129,13 @@ void Cmd_open(char *tr[], ABIERTOLISTA abiertos, FILES *elemento, int *control) 
     } else if (!strcmp(tr[2], "tr")) {
         mode |= O_WRONLY | O_TRUNC;  // Truncar el archivo a tamaño 0
     } else {
-        fprintf(stderr, "Error: Modo de apertura desconocido.\n");
+        perror("Error: Modo de apertura desconocido.\n");
         *control = 0;  // Error si el modo no es reconocido
         return;
     }
 
     // Abrir el archivo con el modo especificado
-    if ((df = open(tr[1], mode, 0777)) == -1) {
+    if ((df = open(tr[1], mode, 0644)) == -1) {
         perror("Imposible abrir fichero");
         *control = 0;  // Indicar que hubo un error al abrir el archivo
     } else {
@@ -185,10 +186,30 @@ int TrocearCadena(char * cadena, char * trozos[]){
     i++;
     return i;
 }
-
 void help() {
-    printf("authors[-l/-n]\npid\nppid\ncd [dir]\ndate[-d/-t]\nhistoric[-N/N]\nopen [archivo] modo\nclose [df]\ndup [df]\ninfosys\nhelp [cmd]\nquit\nexit\nbye\n");
+    printf("authors [-l/-n]           Imprime los nombres y logins de los autores del programa.\n");
+    printf("pid                       Imprime el PID del proceso actual.\n");
+    printf("ppid                      Imprime el PID del proceso padre.\n");
+    printf("cd [dir]                  Cambia el directorio de trabajo actual a 'dir'.\n");
+    printf("date [-d/-t]              Imprime la fecha y hora actual.\n");
+    printf("historic [-N/N]           Muestra o repite comandos del historial.\n");
+    printf("open [archivo] modo       Abre un archivo con el modo especificado.\n");
+    printf("close [df]                Cierra el descriptor de archivo especificado.\n");
+    printf("dup [df]                  Duplica el descriptor de archivo especificado.\n");
+    printf("infosys                   Imprime informacion sobre la maquina que ejecuta la shell.\n");
+    printf("help [cmd]                Muestra la lista de comandos o ayuda sobre un comando especifico.\n");
+    printf("quit/exit/bye             Termina la shell.\n");
+    printf("makefile [archivo]        Crea un archivo nuevo.\n");
+    printf("makedir [directorio]      Crea un nuevo directorio.\n");
+    printf("listfile [archivo/dir]    Da informacion sobre un archivo o directorio.\n");
+    printf("cwd                       Imprime el directorio de trabajo actual.\n");
+    printf("listdir [directorio]      Lista el contenido de un directorio.\n");
+    printf("reclist [directorio]      Lista un directorio recursivamente (subdirectorios despues).\n");
+    printf("revlist [directorio]      Lista un directorio recursivamente (subdirectorios antes).\n");
+    printf("erase [archivo/dir]       Elimina archivos o directorios vacios.\n");
+    printf("delrec [directorio]       Elimina recursivamente un directorio y su contenido.\n");
 }
+
 void help_cmd(char *args[]) {
     if (strcmp(args[1], "authors") == 0) {
         printf("Imprime los nombres y logins de los autores del programa.\n"
@@ -277,7 +298,8 @@ void Cmd_dup(char *tr[], ABIERTOLISTA *abiertos) {
 
     // Si no se encuentra el descriptor, limpiar y retornar
     if (control == 0) {
-        fprintf(stderr, "Error: No se pudo encontrar el archivo asociado al descriptor %d\n", df);
+        errno = EBADF;  // Asignar un error adecuado si no se encuentra el descriptor
+        perror("Error: No se pudo encontrar el archivo asociado al descriptor");
         close(duplicado); // Cerrar el descriptor duplicado si no se encuentra el original
         return;
     }
@@ -542,8 +564,6 @@ void revlist(char* path, int mode) {
     struct stat strat;
     DIR *dir;
     struct tm *tm_info;
-    struct passwd *pwd;
-    struct group *grp;
     char buffer[80];
     char ruta_completa[1024];
 
