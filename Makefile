@@ -17,7 +17,7 @@ INCLUDES = -I $(HEADER_FILES_DIR)
 OUTPUT = p1
 
 #ficheros .h.  Si hay varios, se precede cada uno con $(HEADER_FILES_DIR)/
-HEADERS = $(HEADER_FILES_DIR)/abiertolista.h listahist.h libshell.h
+HEADERS = $(HEADER_FILES_DIR)/abiertolista.h listahist.h libshell.h 
 
 #FUENTES: todos los archivos .c necesarios
 SRCS = p1.c abiertolista.c listahist.c libshell.c
